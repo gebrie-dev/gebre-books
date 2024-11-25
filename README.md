@@ -46,4 +46,9 @@ PORT=3600
 ## Start the server:
 
 npm start  
-Access the API at http://localhost:3600
+Access the API at http://localhost:3700/api-docs
+
+** ## Live Demo **
+For a live demo, visit the deployed version of the API:
+
+View Live Demo
