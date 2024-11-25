@@ -3,7 +3,6 @@ const router = express.Router();
 const Joi = require("joi");
 const Book = require("../models/book");
 
-// Joi schema for validating book data
 const bookSchema = Joi.object({
   title: Joi.string().required(),
   author: Joi.string().required(),
@@ -16,7 +15,6 @@ const bookSchema = Joi.object({
   favorite: Joi.boolean(),
 });
 
-// Middleware to validate the book data
 const validateBook = (req, res, next) => {
   const { error } = bookSchema.validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -235,25 +233,19 @@ router.get("/recommendations", async (req, res) => {
 router.post("/favorite", async (req, res) => {
   const { id } = req.body;
 
-  // Validate the ID format
   if (!id.match(/^[0-9a-fA-F]{24}$/)) {
     return res.status(400).send("Invalid ID format");
   }
 
   try {
-    // Find the book by ID
     const book = await Book.findById(id);
     if (!book) {
       return res.status(404).send("Book not found");
     }
 
-    // Mark the book as favorite
     book.favorite = true;
 
-    // Save the updated book to the database
     const updatedBook = await book.save();
-
-    // Respond with the updated book
     res.json({
       message: `Book "${updatedBook.title}" marked as favorite.`,
       book: updatedBook,
