@@ -43,14 +43,6 @@ npm install
 MONGO_URI=<your-mongodb-uri>  
 PORT=3700
 
-## Set Up MongoDB and Environment Variables:
-
-Create a .env file in the root of the project directory
-include the following environment variables
-
-MONGO_URI=<your-mongodb-uri>
-PORT=3600
-
 ## Start the server:
 
 npm start  
