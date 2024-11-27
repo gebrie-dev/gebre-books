@@ -41,6 +41,14 @@ npm install
 ## Set up .env with your MongoDB URI and desired port:
 
 MONGO_URI=<your-mongodb-uri>  
+PORT=3700
+
+## Set Up MongoDB and Environment Variables:
+
+Create a .env file in the root of the project directory
+include the following environment variables
+
+MONGO_URI=<your-mongodb-uri>
 PORT=3600
 
 ## Start the server:
@@ -51,4 +59,4 @@ Access the API at http://localhost:3700/api-docs
 ** ## Live Demo **
 For a live demo, visit the deployed version of the API:
 
-View Live Demo
+[View Live Demo](https://gebre-books.onrender.com/api-docs)
