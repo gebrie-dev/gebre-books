@@ -9,8 +9,14 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
 
+// CORS configuration
+const corsOptions = {
+  origin: "*", // Allow any origin (or specify your frontend URL here)
+};
+app.use(cors(corsOptions));
+
+// Swagger configuration
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: "3.0.0",
@@ -21,7 +27,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "http://localhost:3700",
+        url: process.env.SERVER_URL || "http://localhost:3700", // Use environment variable for deployed URL
       },
     ],
   },
@@ -30,16 +36,23 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
+// Set up Swagger UI route
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
+// Import routes
 const booksRouter = require("./routes/books");
 app.use("/books", booksRouter);
-const PORT = process.env.PORT || 3700;
+
+// Start server
+const PORT = process.env.PORT || 3700; // Use dynamic port for cloud platforms
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(
+    `Server running on ${process.env.SERVER_URL || `http://localhost:${PORT}`}`
+  );
 });
