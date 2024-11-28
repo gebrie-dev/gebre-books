@@ -14,16 +14,16 @@ app.use(express.json());
 const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
-      ? "https://your-frontend-domain.com"
+      ? "https://gebre-books.onrender.com"
       : "*", // Allow all in dev and specific frontend in production
   methods: ["GET", "POST", "PUT", "DELETE"], // Specify the allowed HTTP methods
   allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
 };
 
-// Use CORS middleware with the options
+
 app.use(cors(corsOptions));
 
-// Determine the base URL dynamically based on the environment
+
 const baseUrl =
   process.env.NODE_ENV === "production"
     ? "https://gebre-books.onrender.com" // Render deployed API URL
