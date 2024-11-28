@@ -1,15 +1,33 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const cors = require("cors");
-const swaggerJsdoc = require("swagger-jsdoc");
+const cors = require("cors"); // Required for handling CORS
 const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// CORS configuration
+const corsOptions = {
+  origin:
+    process.env.NODE_ENV === "production"
+      ? "https://your-frontend-domain.com"
+      : "*", // Allow all in dev and specific frontend in production
+  methods: ["GET", "POST", "PUT", "DELETE"], // Specify the allowed HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
+};
+
+// Use CORS middleware with the options
+app.use(cors(corsOptions));
+
+// Determine the base URL dynamically based on the environment
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://gebre-books.onrender.com" // Render deployed API URL
+    : "http://localhost:3700"; // Localhost for development
 
 // Swagger setup
 const swaggerOptions = {
@@ -22,11 +40,11 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "http://localhost:3700",
+        url: baseUrl, // Use the dynamic URL based on environment
       },
     ],
   },
-  apis: ["./routes/books.js"],
+  apis: ["./routes/books.js"], // Adjust the path of your Swagger doc
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
@@ -47,5 +65,5 @@ app.use("/books", booksRouter);
 // Start server
 const PORT = process.env.PORT || 3700;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on ${baseUrl}`);
 });
