@@ -1,0 +1,357 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Gebre Books Collection API",
+    "version": "1.0.0",
+    "description": "An API for managing book collections with user authentication and role-based access control (RBAC)."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3600",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://gebre-books.onrender.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/auth/signup": {
+      "post": {
+        "summary": "Create a new user",
+        "description": "This route is for creating a new user by providing a username, email, and password.",
+        "operationId": "signup",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "john_doe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                },
+                "required": ["username", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully"
+          },
+          "400": {
+            "description": "User already exists"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login to the system",
+        "description": "Authenticate a user and return a JWT token.",
+        "operationId": "login",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "jwt-token-here"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/books": {
+      "get": {
+        "summary": "Fetch books (User access)",
+        "description": "Fetch a list of books based on user-specific criteria. Accessible by users and admins.",
+        "operationId": "getBooks",
+        "tags": ["Books"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Books fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "example": "60d0fe4f5311236168a109ca"
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "The Great Gatsby"
+                      },
+                      "author": {
+                        "type": "string",
+                        "example": "F. Scott Fitzgerald"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a new book (User access)",
+        "description": "Add a new book to the collection. Only authenticated users can create books.",
+        "operationId": "addBook",
+        "tags": ["Books"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "To Kill a Mockingbird"
+                  },
+                  "author": {
+                    "type": "string",
+                    "example": "Harper Lee"
+                  },
+                  "isbn": {
+                    "type": "string",
+                    "example": "978-0061120084",
+                    "description": "The ISBN (International Standard Book Number) of the book."
+                  },
+                  "publishedYear": {
+                    "type": "integer",
+                    "example": 1960
+                  },
+                  "favorite": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                },
+
+                "required": ["title", "author"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Book created successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/books/all": {
+      "get": {
+        "summary": "Fetch all books (Admin access)",
+        "description": "Fetch all books from the database. Accessible only by admins.",
+        "operationId": "getAllBooks",
+        "tags": ["Books"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All books fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "example": "60d0fe4f5311236168a109ca"
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "1984"
+                      },
+                      "author": {
+                        "type": "string",
+                        "example": "George Orwell"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/books/favorite": {
+      "post": {
+        "summary": "Mark a book as favorite",
+        "description": "Allows users to mark a book as their favorite.",
+        "operationId": "markFavorite",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": ["id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Book marked as favorite"
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      }
+    },
+    "/books/recommendations": {
+      "get": {
+        "summary": "Get book recommendations (User access)",
+        "description": "Get personalized book recommendations based on user preferences or role. Accessible by authenticated users.",
+        "operationId": "getRecommendations",
+        "tags": ["Books"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book recommendations fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "example": "60d0fe4f5311236168a109ca"
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "The Catcher in the Rye"
+                      },
+                      "author": {
+                        "type": "string",
+                        "example": "J.D. Salinger"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

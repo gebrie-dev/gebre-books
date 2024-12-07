@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const Joi = require("joi");
 const Book = require("../models/book");
+const Joi = require("joi");
+const { verifyJWT, verifyRole } = require("../middleware/auth");
 
+// Joi validation schema for book data
 const bookSchema = Joi.object({
   title: Joi.string().required(),
   author: Joi.string().required(),
@@ -15,276 +17,117 @@ const bookSchema = Joi.object({
   favorite: Joi.boolean(),
 });
 
+// Middleware to validate book data
 const validateBook = (req, res, next) => {
   const { error } = bookSchema.validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+  if (error) return res.status(400).json({ error: error.details[0].message });
   next();
 };
 
-/**
- * @swagger
- * /books:
- *   get:
- *     summary: Get a list of all books
- *     responses:
- *       200:
- *         description: List of books
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Book'
- */
-router.get("/", async (req, res) => {
+// Utility to validate ObjectId format
+const validateObjectId = (req, res, next) => {
+  const id = req.params.id || req.body.id;
+  if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+  next();
+};
+
+// ADMIN: Fetch all books (Admin only)
+router.get("/all", verifyJWT, verifyRole(["admin"]), async (req, res) => {
   try {
-    const books = await Book.find();
+    const books = await Book.find().lean();
     res.json(books);
   } catch (err) {
-    res.status(500).send("Failed to fetch books");
+    res.status(500).json({ error: "Failed to fetch books" });
   }
 });
 
-/**
- * @swagger
- * /books:
- *   post:
- *     summary: Add a new book
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Book'
- *     responses:
- *       201:
- *         description: Book added successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Book'
- */
-router.post("/", validateBook, async (req, res) => {
+// USER: Fetch books based on user-specific criteria
+router.get("/", verifyJWT, async (req, res) => {
   try {
+    const userId = req.user.userId;
+    const books = await Book.find({ userId }).lean();
+    res.json(books);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user-specific books" });
+  }
+});
+
+router.post("/", verifyJWT,verifyRole(["user"]), validateBook, async (req, res) => {
+  try {
+    const userId = req.user.userId; 
     const { title, author, isbn, publishedYear, favorite } = req.body;
+
+    
     const existingBook = await Book.findOne({ isbn });
-    if (existingBook)
-      return res.status(400).send("Book with this ISBN already exists.");
+    if (existingBook) {
+      return res
+        .status(400)
+        .json({ error: "Book with this ISBN already exists." });
+    }
 
-    const book = new Book({ title, author, isbn, publishedYear, favorite });
-    const savedBook = await book.save();
-    res.status(201).json(savedBook);
-  } catch (err) {
-    res.status(500).send("Failed to save book");
-  }
-});
-
-/**
- * @swagger
- * /books/{id}:
- *   put:
- *     summary: Update an existing book
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: The ID of the book to update
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Book'
- *     responses:
- *       200:
- *         description: Book updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Book'
- *       404:
- *         description: Book not found
- *       400:
- *         description: Invalid ID format
- */
-router.put("/:id", validateBook, async (req, res) => {
-  const { id } = req.params;
-  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-    return res.status(400).send("Invalid ID format");
-  }
-
-  try {
-    const updatedBook = await Book.findByIdAndUpdate(id, req.body, {
-      new: true,
+    const book = new Book({
+      userId,
+      title,
+      author,
+      isbn,
+      publishedYear,
+      favorite,
     });
-    if (!updatedBook) return res.status(404).send("Book not found");
-    res.json(updatedBook);
+
+    console.log("Saving book:", book); 
+
+    const savedBook = await book.save();
+    res.status(201).json({
+      success: true,
+      message: "Book created successfully",
+      data: savedBook,
+    });
   } catch (err) {
-    res.status(500).send("Failed to update book");
+    console.error("Error while saving book:", err); 
+    res.status(500).json({
+      error: "Failed to save book",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
   }
 });
-
-/**
- * @swagger
- * /books/{id}:
- *   delete:
- *     summary: Delete a book by ID
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: The ID of the book to delete
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Book successfully deleted
- *       404:
- *         description: Book not found
- *       400:
- *         description: Invalid ID format
- */
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-    return res.status(400).send("Invalid ID format");
-  }
-
+router.post("/favorite", verifyJWT, validateObjectId, async (req, res) => {
   try {
-    const deletedBook = await Book.findByIdAndDelete(id);
-    if (!deletedBook) return res.status(404).send("Book not found");
-    res.status(200).send("Book successfully deleted");
-  } catch (err) {
-    res.status(500).send("Failed to delete book");
-  }
-});
+    console.log("Favorite request body:", req.body);
 
-/**
- * @swagger
- * /books/recommendations:
- *   get:
- *     summary: Get book recommendations
- *     parameters:
- *       - in: query
- *         name: limit
- *         description: Limit the number of recommendations
- *         required: false
- *         schema:
- *           type: integer
- *           default: 2
- *     responses:
- *       200:
- *         description: List of recommended books
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Book'
- *       404:
- *         description: No books available
- */
-router.get("/recommendations", async (req, res) => {
-  const limit = parseInt(req.query.limit) || 2;
-  try {
-    const books = await Book.aggregate([{ $sample: { size: limit } }]);
-    if (books.length === 0) return res.status(404).send("No books available");
-    res.json(books);
-  } catch (err) {
-    res.status(500).send("Failed to fetch recommendations");
-  }
-});
-
-/**
- * @swagger
- * /books/favorite:
- *   post:
- *     summary: Mark a specific book as a favorite
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: string
- *                 description: The ID of the book to mark as favorite
- *                 example: "67440e98d9734765f737daad"
- *     responses:
- *       200:
- *         description: Book marked as favorite successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 book:
- *                   $ref: '#/components/schemas/Book'
- *       404:
- *         description: Book not found
- *       400:
- *         description: Invalid ID format
- */
-router.post("/favorite", async (req, res) => {
-  const { id } = req.body;
-
-  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-    return res.status(400).send("Invalid ID format");
-  }
-
-  try {
-    const book = await Book.findById(id);
+    const book = await Book.findById(req.body.id);
     if (!book) {
-      return res.status(404).send("Book not found");
+      console.error("Book not found:", req.body.id);
+      return res.status(404).json({ error: "Book not found" });
     }
 
     book.favorite = true;
-
     const updatedBook = await book.save();
-    res.json({
+
+    console.log(`Book "${updatedBook.title}" marked as favorite`);
+    res.status(200).json({
       message: `Book "${updatedBook.title}" marked as favorite.`,
       book: updatedBook,
     });
   } catch (err) {
-    res.status(500).send("Failed to mark book as favorite");
+    console.error("Error marking book as favorite:", err);
+    res.status(500).json({ error: "Failed to mark book as favorite" });
   }
 });
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     Book:
- *       type: object
- *       required:
- *         - title
- *         - author
- *         - isbn
- *         - publishedYear
- *       properties:
- *         _id:
- *           type: string
- *           description: Unique identifier for the book
- *         title:
- *           type: string
- *           description: Title of the book
- *         author:
- *           type: string
- *           description: Author of the book
- *         isbn:
- *           type: string
- *           description: ISBN number of the book
- *         publishedYear:
- *           type: integer
- *           description: Year the book was published
- *         favorite:
- *           type: boolean
- *           description: Whether the book is marked as a favorite
- */
+
+router.get("/recommendations", verifyJWT, async (req, res) => {
+  const limit = parseInt(req.query.limit) || 2;
+  try {
+    const books = await Book.aggregate([{ $sample: { size: limit } }]).exec();
+    if (books.length === 0) {
+      return res.status(404).json({ error: "No books available" });
+    }
+    res.json(books);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch recommendations" });
+  }
+});
 
 module.exports = router;
