@@ -70,18 +70,6 @@
         }
       }
     },
-    "/auth/admin-only": {
-      "get": {
-        "summary": "Admin-only route",
-        "tags": ["Authentication"],
-        "security": [{ "BearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Admin access granted" },
-          "403": { "description": "Access forbidden, insufficient role" },
-          "401": { "description": "Unauthorized" }
-        }
-      }
-    },
     "/auth/profile": {
       "get": {
         "summary": "Fetch the profile of the authenticated user",

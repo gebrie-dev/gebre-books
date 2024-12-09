@@ -75,13 +75,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Admin-only route (protected)
-router.get("/admin-only", verifyJWT, isAdmin, (req, res) => {
-  res
-    .status(200)
-    .json({ message: "Welcome, Admin! You have access to this route." });
-});
-
 // Profile route to fetch user details
 router.get("/profile", verifyJWT, async (req, res) => {
   try {
