@@ -53,9 +53,8 @@ Follow the steps below to sign up, log in, and access protected endpoints.
 
 1. Click the **"Authorize"** button in Swagger UI.
 2. Enter the token in the format:
-   ```plaintext
+  ```plaintext
    Bearer <your-token>
-   ```
 
 ### **. Sign Up with new users or admin**
 
@@ -64,50 +63,64 @@ before logging in optionally and loin back with the above format.
 
 #### Admin Sign-Up:
 
-````json
+  ```json
+
+   {
+    "username": "adminName",
+    "email": "name@example.com",
+    "password": "yourpassword",
+    "role": "admin"
+  }
+
+
+ 
+
+### user Sign-Up:
+
+``` bash
 
 {
-"username": "adminName",
-"email": "name@example.com",
-"password": "yourpassword",
-"role": "admin"
+  "username": "userName",
+  "email": "name@example.com",
+  "password": "yourpassword",
+  "role": "user"
  }
 
-## user Sign-Up:
-```json
+ ```
 
-{
-"username": "userName",
-"email": "name@example.com",
-"password": "yourpassword",
-"role": "user"
-}
-
-
-##Quick Start
-###Clone the repository:
+## Quick Start
+### Clone the repository:
 
 git clone <https://github.com/gebrie-dev/gebre-books.git>
 
-## Install dependencies:
+ ## Install dependencies:
 
-npm install
+ ``` javascript
+
+     npm install
+
 
 ## Set up .env with your MongoDB URI and desired port:
 ``` bash
 MONGO_URI=<your-mongodb-uri>
 PORT=3700
+```
 
 ## Start the server:
 ``` bash
-npm start
+  npm start
+
+```
 
 Access the API at
-http://localhost:3600/api-docs
+``` bash
+ http://localhost:3600/api-docs
 
-** ## Live Demo **
+ ```
+
+ ## Live Demo
 For a live demo, visit the deployed version of the API:
 
-[View Live Demo](https://gebre-books.onrender.com/api-docs)
+[Live Demo 🌍](https://gebre-books.onrender.com/api-docs)
 
-````
+

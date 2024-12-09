@@ -8,11 +8,11 @@
   "servers": [
     {
       "url": "https://gebre-books.onrender.com",
-      "description": "Local development server"
+      "description": "Production server"
     },
     {
       "url": "http://localhost:3600",
-      "description": "Production server"
+      "description": "Local development server"
     }
   ],
   "paths": {
