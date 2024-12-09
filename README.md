@@ -37,10 +37,6 @@ Gebre-Books Collection is a RESTful API designed to simplify the management of b
 
 ## 🔐 **Authorization Guide**
 
-To access protected endpoints, follow these steps:
-
-## 🔐 **Authorization Guide**
-
 Follow the steps below to sign up, log in, and access protected endpoints.
 
 ### **1. Log In with already existng users**
@@ -66,7 +62,7 @@ Follow the steps below to sign up, log in, and access protected endpoints.
 You can sign up as either **Admin** or **User**
 before logging in optionally and loin back with the above format.
 
-#### \*\*Admin Sign-Up:
+#### Admin Sign-Up:
 
 ````json
 
@@ -77,7 +73,7 @@ before logging in optionally and loin back with the above format.
 "role": "admin"
  }
 
-#### **user Sign-Up:
+## user Sign-Up:
 ```json
 
 {
@@ -98,19 +94,20 @@ git clone <https://github.com/gebrie-dev/gebre-books.git>
 npm install
 
 ## Set up .env with your MongoDB URI and desired port:
-
+``` bash
 MONGO_URI=<your-mongodb-uri>
 PORT=3700
 
 ## Start the server:
-
+``` bash
 npm start
-Access the API at http://localhost:3600/api-docs
+
+Access the API at
+http://localhost:3600/api-docs
 
 ** ## Live Demo **
 For a live demo, visit the deployed version of the API:
 
 [View Live Demo](https://gebre-books.onrender.com/api-docs)
-
 
 ````
