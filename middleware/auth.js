@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user"); // Import user model
 
 // JWT verification middleware
 const verifyJWT = (req, res, next) => {
@@ -11,9 +10,10 @@ const verifyJWT = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Store user data in the request object
+    req.user = decoded; // Attach user details to request
     next();
   } catch (err) {
+    console.error("Token verification failed:", err.message);
     res.status(401).json({ error: "Invalid or expired token" });
   }
 };
@@ -21,7 +21,7 @@ const verifyJWT = (req, res, next) => {
 // Middleware for role-based access control
 const verifyRole = (roles) => {
   return (req, res, next) => {
-    const userRole = req.user.role; // Role from decoded JWT token
+    const userRole = req.user.role;
 
     if (!roles.includes(userRole)) {
       return res
@@ -29,7 +29,7 @@ const verifyRole = (roles) => {
         .json({ error: "Access forbidden, insufficient role" });
     }
 
-    next(); // User role is authorized, proceed to the next middleware or route
+    next();
   };
 };
 

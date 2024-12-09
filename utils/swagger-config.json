@@ -3,7 +3,7 @@
   "info": {
     "title": "Gebre Books Collection API",
     "version": "1.0.0",
-    "description": "An API for managing book collections with user authentication and role-based access control (RBAC)."
+    "description": "API for managing book collections with JWT-based authentication and role-based access control (RBAC)."
   },
   "servers": [
     {
@@ -18,9 +18,7 @@
   "paths": {
     "/auth/signup": {
       "post": {
-        "summary": "Create a new user",
-        "description": "This route is for creating a new user by providing a username, email, and password.",
-        "operationId": "signup",
+        "summary": "Sign up a new user",
         "tags": ["Authentication"],
         "requestBody": {
           "required": true,
@@ -29,42 +27,26 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": {
-                    "type": "string",
-                    "example": "john_doe"
-                  },
-                  "email": {
-                    "type": "string",
-                    "example": "john@example.com"
-                  },
-                  "password": {
-                    "type": "string",
-                    "example": "password123"
-                  }
+                  "username": { "type": "string", "example": "john_doe" },
+                  "email": { "type": "string", "example": "john@example.com" },
+                  "password": { "type": "string", "example": "password123" },
+                  "role": { "type": "string", "example": "user" }
                 },
-                "required": ["username", "email", "password"]
+                "required": ["username", "email", "password", "role"]
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "User created successfully"
-          },
-          "400": {
-            "description": "User already exists"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
+          "201": { "description": "User created successfully" },
+          "400": { "description": "User already exists" },
+          "500": { "description": "Internal server error" }
         }
       }
     },
     "/auth/login": {
       "post": {
-        "summary": "Login to the system",
-        "description": "Authenticate a user and return a JWT token.",
-        "operationId": "login",
+        "summary": "Login and receive a JWT token",
         "tags": ["Authentication"],
         "requestBody": {
           "required": true,
@@ -73,14 +55,8 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "type": "string",
-                    "example": "john@example.com"
-                  },
-                  "password": {
-                    "type": "string",
-                    "example": "password123"
-                  }
+                  "email": { "type": "string", "example": "john@example.com" },
+                  "password": { "type": "string", "example": "password123" }
                 },
                 "required": ["email", "password"]
               }
@@ -88,45 +64,66 @@
           }
         },
         "responses": {
+          "200": { "description": "Login successful, returns JWT token" },
+          "400": { "description": "Invalid credentials" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/auth/admin-only": {
+      "get": {
+        "summary": "Admin-only route",
+        "tags": ["Authentication"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Admin access granted" },
+          "403": { "description": "Access forbidden, insufficient role" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "summary": "Fetch the profile of the authenticated user",
+        "tags": ["Authentication"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
           "200": {
-            "description": "Login successful",
+            "description": "Returns the user's profile",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "token": {
+                    "id": {
                       "type": "string",
-                      "example": "jwt-token-here"
-                    }
+                      "example": "60d0fe4f5311236168a109ca"
+                    },
+                    "username": { "type": "string", "example": "john_doe" },
+                    "email": {
+                      "type": "string",
+                      "example": "john@example.com"
+                    },
+                    "role": { "type": "string", "example": "user" }
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Invalid credentials"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
+          "404": { "description": "User not found" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Internal server error" }
         }
       }
     },
-    "/books": {
+    "/books/all": {
       "get": {
-        "summary": "Fetch books (User access)",
-        "description": "Fetch a list of books based on user-specific criteria. Accessible by users and admins.",
-        "operationId": "getBooks",
+        "summary": "Admin: Fetch all books",
         "tags": ["Books"],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
+        "security": [{ "BearerAuth": [] }],
         "responses": {
           "200": {
-            "description": "Books fetched successfully",
+            "description": "Returns all books",
             "content": {
               "application/json": {
                 "schema": {
@@ -145,28 +142,43 @@
                       "author": {
                         "type": "string",
                         "example": "F. Scott Fitzgerald"
-                      }
+                      },
+                      "isbn": { "type": "string", "example": "978-0743273565" }
                     }
                   }
                 }
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Failed to fetch books" }
+        }
+      }
+    },
+    "/books": {
+      "get": {
+        "summary": "User: Fetch user's books with optional favorite filter",
+        "tags": ["Books"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "favorite",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean" },
+            "description": "Filter by favorite status"
           }
+        ],
+        "responses": {
+          "200": { "description": "Books fetched successfully" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Failed to fetch books" }
         }
       },
       "post": {
-        "summary": "Add a new book (User access)",
-        "description": "Add a new book to the collection. Only authenticated users can create books.",
-        "operationId": "addBook",
+        "summary": "User: Add a new book",
         "tags": ["Books"],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
+        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -178,99 +190,85 @@
                     "type": "string",
                     "example": "To Kill a Mockingbird"
                   },
-                  "author": {
-                    "type": "string",
-                    "example": "Harper Lee"
-                  },
-                  "isbn": {
-                    "type": "string",
-                    "example": "978-0061120084",
-                    "description": "The ISBN (International Standard Book Number) of the book."
-                  },
-                  "publishedYear": {
-                    "type": "integer",
-                    "example": 1960
-                  },
-                  "favorite": {
-                    "type": "boolean",
-                    "example": true
-                  }
+                  "author": { "type": "string", "example": "Harper Lee" },
+                  "isbn": { "type": "string", "example": "978-0061120084" },
+                  "publishedYear": { "type": "integer", "example": 1960 },
+                  "favorite": { "type": "boolean", "example": false }
                 },
-
-                "required": ["title", "author"]
+                "required": ["title", "author", "isbn", "publishedYear"]
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Book created successfully"
-          },
-          "400": {
-            "description": "Bad request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/books/all": {
-      "get": {
-        "summary": "Fetch all books (Admin access)",
-        "description": "Fetch all books from the database. Accessible only by admins.",
-        "operationId": "getAllBooks",
-        "tags": ["Books"],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "All books fetched successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "example": "60d0fe4f5311236168a109ca"
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "1984"
-                      },
-                      "author": {
-                        "type": "string",
-                        "example": "George Orwell"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin role required"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
+          "201": { "description": "Book created successfully" },
+          "400": { "description": "Book with this ISBN already exists" },
+          "500": { "description": "Failed to save book" }
         }
       }
     },
     "/books/favorite": {
       "post": {
-        "summary": "Mark a book as favorite",
-        "description": "Allows users to mark a book as their favorite.",
-        "operationId": "markFavorite",
-        "security": [
+        "summary": "User: Mark a book as favorite",
+        "tags": ["Books"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "example": "60d0fe4f5311236168a109ca"
+                  }
+                },
+                "required": ["id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Book marked as favorite successfully" },
+          "404": { "description": "Book not found or access denied" },
+          "500": { "description": "Failed to mark book as favorite" }
+        }
+      }
+    },
+    "/books/recommendations": {
+      "get": {
+        "summary": "User: Get random book recommendations",
+        "tags": ["Books"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
           {
-            "BearerAuth": []
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "example": 2 },
+            "description": "Number of recommendations to fetch"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Book recommendations fetched successfully" },
+          "404": { "description": "No books available" },
+          "500": { "description": "Failed to fetch recommendations" }
+        }
+      }
+    },
+    "/books/{id}": {
+      "put": {
+        "summary": "User: Update a book",
+        "tags": ["Books"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID of the book to update"
           }
         ],
         "requestBody": {
@@ -280,67 +278,38 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "id": {
-                    "type": "string"
-                  }
-                },
-                "required": ["id"]
+                  "title": { "type": "string", "example": "Updated Title" },
+                  "author": { "type": "string", "example": "Updated Author" },
+                  "publishedYear": { "type": "integer", "example": 2023 },
+                  "favorite": { "type": "boolean", "example": true }
+                }
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Book marked as favorite"
-          },
-          "404": {
-            "description": "Book not found"
-          }
+          "200": { "description": "Book updated successfully" },
+          "404": { "description": "Book not found or access denied" },
+          "500": { "description": "Failed to update book" }
         }
-      }
-    },
-    "/books/recommendations": {
-      "get": {
-        "summary": "Get book recommendations (User access)",
-        "description": "Get personalized book recommendations based on user preferences or role. Accessible by authenticated users.",
-        "operationId": "getRecommendations",
+      },
+      "delete": {
+        "summary": "Admin/User: Delete a book",
         "tags": ["Books"],
-        "security": [
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
           {
-            "BearerAuth": []
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID of the book to delete"
           }
         ],
         "responses": {
-          "200": {
-            "description": "Book recommendations fetched successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "example": "60d0fe4f5311236168a109ca"
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "The Catcher in the Rye"
-                      },
-                      "author": {
-                        "type": "string",
-                        "example": "J.D. Salinger"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
+          "200": { "description": "Book deleted successfully" },
+          "404": { "description": "Book not found or access denied" },
+          "500": { "description": "Failed to delete book" }
         }
       }
     }
