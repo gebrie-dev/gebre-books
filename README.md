@@ -60,8 +60,8 @@ Follow the steps below to sign up, log in, and access protected endpoints.
 
 ### **. Sign Up with new users or admin**
 
-You can sign up as either **Admin** or **User**
-before logging in optionally and loin back with the above format.
+if you want to create a new user and admin
+You can sign up as either **Admin** or **User** 
 
 #### Admin Sign-Up:
 
@@ -86,12 +86,13 @@ before logging in optionally and loin back with the above format.
 }
 
 ```
-
+then login based on the login instruction
 ## Quick Start
 
 ### Clone the repository:
-
-git clone <https://github.com/gebrie-dev/gebre-books.git>
+``` bash
+ git clone <https://github.com/gebrie-dev/gebre-books.git>
+```
 
 ## Install dependencies:
 
