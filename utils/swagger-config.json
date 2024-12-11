@@ -226,7 +226,7 @@
     },
     "/books/recommendations": {
       "get": {
-        "summary": "User: Get random book recommendations",
+        "summary": "User: Get  book recommendations",
         "tags": ["Books"],
         "security": [{ "BearerAuth": [] }],
         "parameters": [
