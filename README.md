@@ -112,7 +112,7 @@ then login based on the above login instruction
 
 ```bash
  MONGO_URI=<your-mongodb-uri>
- PORT=3700
+ PORT=3600
 ```
 
 ## Start the server:
