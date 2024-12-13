@@ -3,8 +3,6 @@ const router = express.Router();
 const Book = require("../models/book");
 const Joi = require("joi");
 const { verifyJWT, verifyRole } = require("../middleware/auth");
-
-// Joi validation schema for book data
 const bookSchema = Joi.object({
   title: Joi.string().required(),
   author: Joi.string().required(),
@@ -16,15 +14,11 @@ const bookSchema = Joi.object({
     .required(),
   favorite: Joi.boolean(),
 });
-
-// Middleware to validate book data
 const validateBook = (req, res, next) => {
   const { error } = bookSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
   next();
 };
-
-// Utility to validate ObjectId format
 const validateObjectId = (req, res, next) => {
   const id = req.params.id || req.body.id;
   if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -32,8 +26,6 @@ const validateObjectId = (req, res, next) => {
   }
   next();
 };
-
-// ADMIN: Fetch all books
 router.get("/all", verifyJWT, verifyRole(["admin"]), async (req, res) => {
   try {
     const books = await Book.find().lean();
@@ -42,25 +34,31 @@ router.get("/all", verifyJWT, verifyRole(["admin"]), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch books" });
   }
 });
-
-// USER: Fetch books by user or filter by favorites
 router.get("/", verifyJWT, verifyRole(["user"]), async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { favorite } = req.query; // Optional filter by favorite
+    const { favorite } = req.query;
+
     const filter = { userId };
+
     if (favorite === "true") {
       filter.favorite = true;
     }
 
     const books = await Book.find(filter).lean();
-    res.json(books);
+
+    if (books.length === 0) {
+      return res
+        .status(200)
+        .json({ message: "No books available for this user.", books: [] });
+    }
+
+    res.status(200).json(books);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch books" });
   }
 });
 
-// USER: Add a new book
 router.post(
   "/",
   verifyJWT,
@@ -71,7 +69,6 @@ router.post(
       const userId = req.user.userId;
       const { title, author, isbn, publishedYear, favorite } = req.body;
 
-      // Check if a book with the same ISBN already exists
       const existingBook = await Book.findOne({ isbn });
       if (existingBook) {
         return res
@@ -80,7 +77,7 @@ router.post(
       }
 
       const book = new Book({
-        userId, // Set the userId from the logged-in user
+        userId,
         title,
         author,
         isbn,
@@ -99,7 +96,7 @@ router.post(
     }
   }
 );
-// USER: Mark a book as favorite
+
 router.post(
   "/favorite",
   verifyJWT,
@@ -127,8 +124,6 @@ router.post(
   }
 );
 
-// USER: Get book recommendations
-// USER: Get personalized book recommendations
 router.get(
   "/recommendations",
   verifyJWT,
@@ -139,15 +134,12 @@ router.get(
     try {
       const userId = req.user.userId;
 
-      // Fetch the user's favorite books
       const favoriteBooks = await Book.find({ userId, favorite: true }).lean();
 
       let recommendations;
 
       if (favoriteBooks.length > 0) {
-        // Use favorite books to find recommendations (e.g., same author)
         const authors = favoriteBooks.map((book) => book.author);
-
         recommendations = await Book.aggregate([
           { $match: { author: { $in: authors }, userId: { $ne: userId } } },
           { $sample: { size: limit } },
@@ -155,7 +147,6 @@ router.get(
       }
 
       if (!recommendations || recommendations.length === 0) {
-        // Fallback to generic recommendations if no favorites or matches found
         recommendations = await Book.aggregate([
           { $sample: { size: limit } },
         ]).exec();
@@ -171,8 +162,6 @@ router.get(
     }
   }
 );
-
-// USER: Update a book
 router.put(
   "/:id",
   verifyJWT,
@@ -204,8 +193,6 @@ router.put(
     }
   }
 );
-
-// ADMIN or USER: Delete a book
 router.delete(
   "/:id",
   verifyJWT,

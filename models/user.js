@@ -32,7 +32,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Pre-save hook for password hashing
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
@@ -47,7 +46,6 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-// Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };

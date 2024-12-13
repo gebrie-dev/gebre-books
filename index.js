@@ -21,7 +21,6 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
@@ -29,10 +28,9 @@ mongoose
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(apiDocs));
 
-app.use("/auth", authRouter); 
+app.use("/auth", authRouter);
 
-
-app.use("/books", verifyJWT, booksRouter); 
+app.use("/books", verifyJWT, booksRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
